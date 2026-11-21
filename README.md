@@ -70,6 +70,20 @@ npm run dev
 | 回溯重放引擎 | `replay_engine` | 重放任务 | 历史批次范围、新解析规则版本、重放状态 |
 | 聚合查询视图 | `aggregation_view` | 聚合视图 | 视图名称、聚合维度、指标定义 |
 | 采集血缘 | `data_lineage` | 血缘关系 | 来源批次、解析规则版本、标准化版本 |
+| 采集回执 | `ingest_receipt` | 可续做回执 | 回执编号、所属批次、期望行总数、缺失行号 |
+| 回执行清单 | `receipt_line` | 回执行 | 回执编号、原始行号、接收分类、关联原始记录ID |
+
+### 中断补交与可续做回执
+
+采集写到一半断线时，流水线不再丢失已收日志的恢复入口：
+
+- `POST /api/pipeline/receipt/open` 建立可续做采集回执，预占批次并预登记全部期望行的缺失位；
+- `POST /api/pipeline/receipt/submit-line` 逐行补交，自动区分**原样重试**（正文一致，只累加重试计数、不换 raw_records 身份）、**待核更正**（同编号正文变化，挂起候选并保留原文）和**新行**（首次收到，落原始日志记录并确认）；
+- `POST /api/pipeline/receipt/interrupt` 固化恢复窗口（已确认行、缺失行、待核更正行）；
+- `POST /api/pipeline/receipt/resolve-correction` 裁决更正（accept 产生新版本 raw_records，旧记录标记 `superseded` 保留可回查；reject 维持原文，候选留痕）；
+- `GET /api/pipeline/receipt/{receipt_no}` 回查每条正文、版本历史与原始日志关联；
+- `POST /api/pipeline/receipt/complete` 关闭回执，未确认齐备（仍有缺失或待核更正）的批次不能冒充完整输入；
+- `POST /api/pipeline/receipt/parse` 只解析已确认齐备范围内的有效原始记录，回写实际读取的正文范围、行号与正文摘要到标准化明细。
 
 ## 约定
 

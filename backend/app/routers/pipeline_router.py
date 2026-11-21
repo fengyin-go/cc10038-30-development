@@ -72,6 +72,34 @@ class FullPipelinePayload(BaseModel):
     parser_rule: str | None = None
 
 
+class OpenReceiptPayload(BaseModel):
+    source_id: str = Field(..., min_length=1)
+    time_window: str = Field(..., min_length=1)
+    expected_total: int = Field(..., ge=1)
+
+
+class SubmitLinePayload(BaseModel):
+    receipt_no: str = Field(..., min_length=1)
+    line_no: int = Field(..., ge=1)
+    body: str = Field(..., min_length=1)
+
+
+class InterruptPayload(BaseModel):
+    receipt_no: str = Field(..., min_length=1)
+    reason: str = "连接中断"
+
+
+class CorrectLinePayload(BaseModel):
+    receipt_no: str = Field(..., min_length=1)
+    line_no: int = Field(..., ge=1)
+    decision: str = Field(..., pattern="^(accept|reject)$")
+
+
+class ReceiptParsePayload(BaseModel):
+    receipt_no: str = Field(..., min_length=1)
+    parser_rule_name: str | None = None
+
+
 @router.post("/source/register")
 def pipeline_register_source(payload: SourceRegisterPayload) -> dict[str, Any]:
     return pipeline.register_source(payload.source_id, payload.protocol, payload.region)
@@ -95,6 +123,43 @@ def pipeline_parse_batch(payload: ParseBatchPayload) -> dict[str, Any]:
 @router.post("/batch/recover")
 def pipeline_recover_batch(batch_no: str = Query(..., min_length=1)) -> dict[str, Any]:
     return pipeline.recover_batch(batch_no)
+
+
+@router.post("/receipt/open")
+def pipeline_open_receipt(payload: OpenReceiptPayload) -> dict[str, Any]:
+    return pipeline.open_resumable_receipt(
+        payload.source_id, payload.time_window, payload.expected_total
+    )
+
+
+@router.post("/receipt/submit-line")
+def pipeline_submit_line(payload: SubmitLinePayload) -> dict[str, Any]:
+    return pipeline.submit_line(payload.receipt_no, payload.line_no, payload.body)
+
+
+@router.post("/receipt/interrupt")
+def pipeline_mark_interrupt(payload: InterruptPayload) -> dict[str, Any]:
+    return pipeline.mark_interrupt(payload.receipt_no, payload.reason)
+
+
+@router.post("/receipt/resolve-correction")
+def pipeline_resolve_correction(payload: CorrectLinePayload) -> dict[str, Any]:
+    return pipeline.resolve_correction(payload.receipt_no, payload.line_no, payload.decision)
+
+
+@router.get("/receipt/{receipt_no}")
+def pipeline_get_receipt(receipt_no: str) -> dict[str, Any]:
+    return pipeline.get_receipt(receipt_no)
+
+
+@router.post("/receipt/complete")
+def pipeline_complete_receipt(receipt_no: str = Query(..., min_length=1)) -> dict[str, Any]:
+    return pipeline.complete_receipt(receipt_no)
+
+
+@router.post("/receipt/parse")
+def pipeline_parse_resumable(payload: ReceiptParsePayload) -> dict[str, Any]:
+    return pipeline.parse_resumable_batch(payload.receipt_no, payload.parser_rule_name)
 
 
 @router.post("/dedup/run")

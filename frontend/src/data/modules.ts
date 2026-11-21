@@ -222,6 +222,28 @@ export const MODULES: ModuleMeta[] = [
     actionTargets: {"验证血缘": "已记录", "标记断裂": "验证异常"},
     metrics: ["血缘条目数", "已验证血缘", "断裂血缘"],
   },
+  {
+    key: "ingest_receipt",
+    name: "采集回执",
+    entity: "采集回执",
+    desc: "中断后可续做的采集回执，保留每条已收正文、缺失位置与恢复窗口",
+    fields: ["回执编号", "所属批次", "数据源", "期望行总数", "已确认行数", "缺失行号", "回执状态"],
+    statuses: ["采集中", "待补齐", "已完成", "更正待核"],
+    actions: ["标记补齐", "确认完结"],
+    actionTargets: {"标记补齐": "待补齐", "确认完结": "已完成"},
+    metrics: ["回执总数", "已完成回执", "待处理回执"],
+  },
+  {
+    key: "receipt_line",
+    name: "回执行清单",
+    entity: "回执行",
+    desc: "逐行登记接收结果、正文版本与原始日志关联，区分重试、更正与新行",
+    fields: ["回执编号", "原始行号", "接收分类", "确认状态", "当前正文摘要", "关联原始记录ID", "最近接收时间"],
+    statuses: ["已确认", "缺失", "更正待核"],
+    actions: ["确认更正", "驳回更正"],
+    actionTargets: {"确认更正": "已确认", "驳回更正": "已确认"},
+    metrics: ["清单行数", "已确认行", "待核行"],
+  },
 ]
 
 export const MODULE_BY_KEY: Map<string, ModuleMeta> = new Map(

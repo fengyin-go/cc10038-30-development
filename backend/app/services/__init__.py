@@ -22,6 +22,8 @@ from app.services.data_export import DataExportService
 from app.services.replay_engine import ReplayEngineService
 from app.services.aggregation_view import AggregationViewService
 from app.services.data_lineage import DataLineageService
+from app.services.ingest_receipt import IngestReceiptService
+from app.services.receipt_line import ReceiptLineService
 
 SERVICES: dict[str, BaseModuleService] = {
     "source_registry": SourceRegistryService(),
@@ -44,6 +46,8 @@ SERVICES: dict[str, BaseModuleService] = {
     "replay_engine": ReplayEngineService(),
     "aggregation_view": AggregationViewService(),
     "data_lineage": DataLineageService(),
+    "ingest_receipt": IngestReceiptService(),
+    "receipt_line": ReceiptLineService(),
 }
 
 
